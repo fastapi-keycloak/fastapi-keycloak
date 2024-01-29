@@ -1,18 +1,8 @@
 # FastAPI Keycloak Integration
 
-[![Test-Suite](https://github.com/code-specialist/fastapi-keycloak/actions/workflows/testing.yaml/badge.svg)](https://github.com/code-specialist/fastapi-keycloak/actions/workflows/testing.yaml)
-[![CodeFactor](https://www.codefactor.io/repository/github/code-specialist/fastapi-keycloak/badge)](https://www.codefactor.io/repository/github/code-specialist/fastapi-keycloak)
-[![codecov](https://codecov.io/gh/code-specialist/fastapi-keycloak/branch/master/graph/badge.svg?token=PX6NJBDUJ9)](https://codecov.io/gh/code-specialist/fastapi-keycloak)
 ![Py3.8](https://img.shields.io/badge/-Python%203.8-brightgreen)
 ![Py3.9](https://img.shields.io/badge/-Python%203.9-brightgreen)
 ![Py3.10](https://img.shields.io/badge/-Python%203.10-brightgreen)
-[![CodeQL](https://github.com/code-specialist/fastapi-keycloak/actions/workflows/codeql.yml/badge.svg)](https://github.com/code-specialist/fastapi-keycloak/actions/workflows/codeql.yml)
-
----
-
-## Notice - 📢 LOOKING FOR MAINTAINERS 📢
-
-We created this as an open-source project in order to share our code with other people. Unfortunately we decided to abandon Keycloak in our project due to its unreliability in API compatibility and the general maintenance overhead. Therefore, we are no longer able to frequently update this library. We are searching for someone or a group of people to maintain this repository actively, as we do not have the capacity but think that keycloak still is a highly relevant IDP solution. If you or your team want to take over the responsibility, please mail us at [admin@code-specialist.com](mailto:admin@code-specialist.com)
 
 ## Introduction
 
@@ -47,3 +37,12 @@ Tests are stored and executed in `./tests`. To test the package, it is necessary
 artificial testing conditions that occur by mocking all the keycloak requests. The issue here is that we currently see no way to offer public testing opportunities without
 significant security issues, which is why you have to run these tests locally and provide a `test_coverage.xml` file. The test coverage is configured in the `pytest.ini` and will
 be created once the tests finished running (locally).
+
+## Original authors
+
+Shoutout to the original authors of this project:
+
+- Yannic Schröer @yannicschroeer
+- Jonas Scholl @JonasScholl
+
+This project was in the [Code Specialist organization](https://github.com/code-specialist/) before being moved here.
