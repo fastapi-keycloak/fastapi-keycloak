@@ -2,13 +2,12 @@
 name = "fastapi_keycloak"
 authors = [
     { name = "Jonas Scholl", email = "jonas@code-specialist.com" },
-    { name = "Yannic Schröer", email = "yannic@code-specialist.com" }
+    { name = "Yannic Schröer", email = "yannic@code-specialist.com" },
+    { name = "Alex Barceló", email = "alex@betarho.net" }
 ]
 maintainers = [
-    { name = "Jonas Scholl", email = "jonas@code-specialist.com" },
-    { name = "Yannic Schröer", email = "yannic@code-specialist.com" }
+    { name = "Alex Barceló", email = "alex@betarho.net" }
 ]
-readme = "README.md"
 keywords = ['Keycloak', 'FastAPI', 'Authentication', 'Authorization']
 classifiers = [
     'Development Status :: 3 - Alpha',
@@ -22,7 +21,8 @@ classifiers = [
     'Programming Language :: Python :: 3.8',
 ]
 requires-python = ">=3.8"
-dynamic = ["version", "description"]
+dynamic = ["version", "readme"]
+description = "Keycloak API Client for integrating authentication and authorization with FastAPI"
 dependencies = [
     "anyio>=3.4.0",
     "asgiref>=3.4.1",
@@ -49,3 +49,7 @@ dependencies = [
 
 [project.urls]
 Documentation = "https://fastapi-keycloak.code-specialist.com/"
+
+[tool.setuptools.dynamic]
+version = {attr = "fastapi_keycloak.__version__"}
+readme = {file = ["README.md"]}
