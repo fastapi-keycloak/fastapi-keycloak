@@ -53,4 +53,4 @@ repository = "https://github.com/fastapi-keycloak/fastapi-keycloak"
 
 [tool.setuptools.dynamic]
 version = {attr = "fastapi_keycloak.__version__"}
-readme = {file = ["README.md"]}
+readme = {file = ["README.md"], content-type = "text/markdown"}
