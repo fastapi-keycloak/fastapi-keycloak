@@ -190,9 +190,13 @@ class FastAPIKeycloak:
             None: Inplace method, updates the _admin_token
         """
         decoded_token = self._decode_token(token=value)
-        if not decoded_token.get("resource_access").get(
-                "realm-management"
-        ) or not decoded_token.get("resource_access").get("account"):
+        if ((not decoded_token.get("resource_access").get(
+                "realm-management")
+            and
+             (not decoded_token.get("resource_access").get(
+                 "master-realm")) # Keycloak 26 return "master-realm"
+                )
+                or not decoded_token.get("resource_access").get("account")):
             raise AssertionError(
                 """The access required was not contained in the access token for the `admin-cli`.
                 Possibly a Keycloak misconfiguration. Check if the admin-cli client has `Full Scope Allowed`
