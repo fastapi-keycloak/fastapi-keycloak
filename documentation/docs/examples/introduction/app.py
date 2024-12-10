@@ -20,7 +20,7 @@ def admin(user: OIDCUser = Depends(idp.get_current_user(required_roles=["admin"]
 
 
 @app.get("/user/roles")
-def user_roles(user: OIDCUser = Depends(idp.get_current_user)):
+def user_roles(user: OIDCUser = Depends(idp.get_current_user())):
     return f'{user.roles}'
 
 
