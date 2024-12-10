@@ -138,6 +138,7 @@ class FastAPIKeycloak:
             admin_client_id: str = "admin-cli",
             scope: str = "openid profile email",
             timeout: int = 10,
+            ssl_verification: bool = True,
     ):
         """FastAPIKeycloak constructor
 
@@ -162,6 +163,7 @@ class FastAPIKeycloak:
         self.callback_uri = callback_uri
         self.timeout = timeout
         self.scope = scope
+        self.ssl_verification = ssl_verification
         self._get_admin_token()  # Requests an admin access token on startup
 
     @property
@@ -288,6 +290,7 @@ class FastAPIKeycloak:
         response = requests.get(
             url=f"{self.realm_uri}/.well-known/openid-configuration",
             timeout=self.timeout,
+            verify=self.ssl_verification
         )
         return response.json()
 
@@ -325,6 +328,7 @@ class FastAPIKeycloak:
             data=json.dumps(payload),
             headers=headers,
             timeout=self.timeout,
+            verify=self.ssl_verification
         )
 
     def _get_admin_token(self) -> None:
@@ -346,7 +350,7 @@ class FastAPIKeycloak:
             "client_secret": self.admin_client_secret,
             "grant_type": "client_credentials",
         }
-        response = requests.post(url=self.token_uri, headers=headers, data=data, timeout=self.timeout)
+        response = requests.post(url=self.token_uri, headers=headers, data=data, timeout=self.timeout, verify=self.ssl_verification)
         try:
             self.admin_token = response.json()["access_token"]
         except JSONDecodeError as e:
@@ -368,7 +372,7 @@ class FastAPIKeycloak:
         Returns:
             str: Public key for JWT decoding
         """
-        response = requests.get(url=self.realm_uri, timeout=self.timeout)
+        response = requests.get(url=self.realm_uri, timeout=self.timeout, verify=self.ssl_verification)
         public_key = response.json()["public_key"]
         return f"-----BEGIN PUBLIC KEY-----\n{public_key}\n-----END PUBLIC KEY-----"
 
@@ -984,7 +988,7 @@ class FastAPIKeycloak:
             "grant_type": "password",
             "scope": self.scope,
         }
-        response = requests.post(url=self.token_uri, headers=headers, data=data, timeout=self.timeout)
+        response = requests.post(url=self.token_uri, headers=headers, data=data, timeout=self.timeout, verify=self.ssl_verification)
         if response.status_code == 401:
             raise HTTPException(status_code=401, detail="Invalid user credentials")
         if response.status_code == 400:
@@ -1035,7 +1039,7 @@ class FastAPIKeycloak:
             "grant_type": "authorization_code",
             "redirect_uri": self.callback_uri,
         }
-        return requests.post(url=self.token_uri, headers=headers, data=data, timeout=self.timeout)
+        return requests.post(url=self.token_uri, headers=headers, data=data, timeout=self.timeout, verify=self.ssl_verification)
 
     def _admin_request(
             self,
@@ -1061,7 +1065,7 @@ class FastAPIKeycloak:
             "Authorization": f"Bearer {self.admin_token}",
         }
         return requests.request(
-            method=method.name, url=url, data=json.dumps(data), headers=headers, timeout=self.timeout,
+            method=method.name, url=url, data=json.dumps(data), headers=headers, timeout=self.timeout, verify=self.ssl_verification
         )
 
     @functools.cached_property

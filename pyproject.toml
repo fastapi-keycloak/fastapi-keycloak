@@ -47,6 +47,12 @@ dependencies = [
     "itsdangerous>=2.0.1",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0"
+]
+
 [project.urls]
 Documentation = "https://fastapi-keycloak.code-specialist.com/"
 Source Code = "https://github.com/fastapi-keycloak/fastapi-keycloak"
