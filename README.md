@@ -1,8 +1,9 @@
 # FastAPI Keycloak Integration
 
-![Py3.8](https://img.shields.io/badge/-Python%203.8-brightgreen)
 ![Py3.9](https://img.shields.io/badge/-Python%203.9-brightgreen)
 ![Py3.10](https://img.shields.io/badge/-Python%203.10-brightgreen)
+![Py3.11](https://img.shields.io/badge/-Python%203.11-brightgreen)
+![Py3.12](https://img.shields.io/badge/-Python%203.12-brightgreen)
 
 ## Introduction
 
