@@ -1,5 +1,3 @@
-version: '3'
-
 volumes:
   postgres_data:
     driver: local
@@ -15,7 +13,7 @@ services:
       always
 
   keycloak:
-    image: docker.io/jboss/keycloak:16.1.0   # Locally built with `build_keycloak_m1.sh` as the current images do not support the architecture
+    image: quay.io/keycloak/keycloak:25.0
     volumes:
       - ./realm-export.json:/opt/jboss/keycloak/imports/realm-export.json
     command:
