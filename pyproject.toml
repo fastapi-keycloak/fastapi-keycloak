@@ -54,8 +54,9 @@ dev = [
 ]
 
 [project.urls]
-Documentation = "https://fastapi-keycloak.code-specialist.com/"
-Source Code = "https://github.com/fastapi-keycloak/fastapi-keycloak"
+documentation = "https://fastapi-keycloak.code-specialist.com/"
+repository = "https://github.com/fastapi-keycloak/fastapi-keycloak"
+issues = "https://github.com/fastapi-keycloak/fastapi-keycloak/issues"
 
 [tool.setuptools.dynamic]
 version = {attr = "fastapi_keycloak.__version__"}
