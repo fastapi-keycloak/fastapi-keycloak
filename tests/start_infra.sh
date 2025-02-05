@@ -1,1 +1,1 @@
-docker-compose -f keycloak_postgres.yaml up -d
+docker compose -f keycloak_postgres.yaml up -d
