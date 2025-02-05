@@ -14,7 +14,7 @@ jobs:
         python-version: [ '3.8', '3.9', '3.10' ]
     name: Test-Suite for Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Start Test Infrastructure
         run: |
@@ -22,7 +22,7 @@ jobs:
           bash ./start_infra.sh
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
