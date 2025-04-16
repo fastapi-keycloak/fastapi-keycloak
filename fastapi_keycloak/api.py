@@ -266,7 +266,11 @@ class FastAPIKeycloak:
                 JWTClaimsError: If any claim is invalid
                 HTTPException: If any role required is not contained within the roles of the users
             """
-            decoded_token = self._decode_token(token=token, audience="account")
+            try:
+                decoded_token = self._decode_token(token=token, audience="account")
+            except JWTError as e:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED) from e
+
             user = OIDCUser.parse_obj(decoded_token)
             if required_roles:
                 for role in required_roles:
@@ -702,18 +706,18 @@ class FastAPIKeycloak:
             url=f"{self.users_uri}/{user_id}/groups",
             method=HTTPMethod.GET,
         )
-    
+
     @result_or_error(response_model=KeycloakUser, is_list=True)
     def get_group_members(self, group_id: str):
         """Get all members of a group.
-        
+
         Args:
             group_id (str): ID of the group of interest
 
         Returns:
             List[KeycloakUser]: All users in the group. Note that
             the user objects returned are not fully populated.
-        
+
         Raises:
             KeycloakError: If the resulting response is not a successful HTTP-Code (>299)
         """
