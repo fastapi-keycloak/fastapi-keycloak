@@ -238,5 +238,10 @@ def logout():
     return idp.logout_uri
 
 
+@app.post("/refresh", tags=["auth-flow"])
+def refresh(refresh_token: str):
+    return idp.refresh_token(refresh_token=refresh_token)
+
+
 if __name__ == "__main__":
     uvicorn.run("app:app", host="127.0.0.1", port=8081)

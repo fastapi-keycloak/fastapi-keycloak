@@ -57,3 +57,14 @@ TOKEN="eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJrbF9ITTQyMHVmcVVwYmhxc
 
 curl -H 'Accept: application/json' -H "Authorization: Bearer ${TOKEN}"  http://localhost:8081/user
 ```
+
+### Refreshing your token
+
+Once your access token expires, you can use the refresh token (that you got along with the access token) to get a new one.
+
+```shell
+# REFRESH_TOKEN should be changed to the value of 'refresh_token'.
+REFRESH_TOKEN="your_refresh_token"
+
+curl -X POST "http://localhost:8081/refresh?refresh_token=${REFRESH_TOKEN}"
+```
