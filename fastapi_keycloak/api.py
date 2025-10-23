@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Container
 import functools
 import json
 from json import JSONDecodeError
@@ -139,6 +140,7 @@ class FastAPIKeycloak:
             scope: str = "openid profile email",
             timeout: int = 10,
             ssl_verification: bool = True,
+            algorithms: str | Container[str] | None = None
     ):
         """FastAPIKeycloak constructor
 
@@ -164,6 +166,7 @@ class FastAPIKeycloak:
         self.timeout = timeout
         self.scope = scope
         self.ssl_verification = ssl_verification
+        self.algorithms = algorithms
         self._get_admin_token()  # Requests an admin access token on startup
 
     @property
@@ -191,7 +194,7 @@ class FastAPIKeycloak:
         Returns:
             None: Inplace method, updates the _admin_token
         """
-        decoded_token = self._decode_token(token=value)
+        decoded_token = self._decode_token(token=value, algorithms=self.algorithms)
         if ((not decoded_token.get("resource_access").get(
                 "realm-management")
             and
@@ -267,7 +270,7 @@ class FastAPIKeycloak:
                 HTTPException: If any role required is not contained within the roles of the users
             """
             try:
-                decoded_token = self._decode_token(token=token, audience="account")
+                decoded_token = self._decode_token(token=token, audience="account", algorithms=self.algorithms)
             except JWTError as e:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED) from e
 
@@ -1186,13 +1189,13 @@ class FastAPIKeycloak:
             bool: True if the token is valid
         """
         try:
-            self._decode_token(token=token, audience=audience)
+            self._decode_token(token=token, audience=audience, algorithms=self.algorithms)
             return True
         except (ExpiredSignatureError, JWTError, JWTClaimsError):
             return False
 
     def _decode_token(
-            self, token: str, options: dict = None, audience: str = None
+            self, token: str, options: dict = None, audience: str = None, algorithms: str | Container[str] | None = None
     ) -> dict:
         """Decodes a token, verifies the signature by using Keycloaks public key. Optionally verifying the audience
 
@@ -1216,7 +1219,7 @@ class FastAPIKeycloak:
                 "verify_exp": True,
             }
         return jwt.decode(
-            token=token, key=self.public_key, options=options, audience=audience
+            token=token, key=self.public_key, options=options, audience=audience, algorithms=algorithms
         )
 
     def __str__(self):
