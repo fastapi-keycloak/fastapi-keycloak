@@ -35,8 +35,10 @@ pytest tests/unit
 Integration tests — require Docker:
 
 ```shell
-cd tests && ./start_infra.sh && cd ..
-pytest tests/integration
+cd tests && ./start_infra.sh
+./wait_for_service.sh http://localhost:8085 200 100
+./configure_realm.sh   # Keycloak 26+ forces admin-cli into lightweight-token mode; undo that
+cd .. && pytest tests/integration
 cd tests && ./stop_infra.sh
 ```
 

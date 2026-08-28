@@ -483,14 +483,17 @@ class FastAPIKeycloak(FastAPIKeycloakAuth):
             None: Inplace method, updates the _admin_token
         """
         decoded_token = self._decode_token(token=value, algorithms=self.algorithms)
+        resource_access = decoded_token.get("resource_access") or {}
         if (
-            not decoded_token.get("resource_access").get("realm-management")
-            and (not decoded_token.get("resource_access").get("master-realm"))  # Keycloak 26 return "master-realm"
-        ) or not decoded_token.get("resource_access").get("account"):
+            not resource_access.get("realm-management")
+            and (not resource_access.get("master-realm"))  # Keycloak 26 return "master-realm"
+        ) or not resource_access.get("account"):
             raise AssertionError(
                 """The access required was not contained in the access token for the `admin-cli`.
                 Possibly a Keycloak misconfiguration. Check if the admin-cli client has `Full Scope Allowed`
-                and that the `Service Account Roles` contain all roles from `account` and `realm_management`"""
+                and that the `Service Account Roles` contain all roles from `account` and `realm_management`.
+                If `resource_access` is missing entirely, check that the admin client does not have
+                `Always use lightweight access token` enabled, as that suppresses this claim."""
             )
         self._admin_token = value
 
@@ -725,6 +728,28 @@ class FastAPIKeycloak(FastAPIKeycloakAuth):
         groups = self.get_all_groups()
         return list(filter(lambda group: group.name in group_names, groups))
 
+    @result_or_error(response_model=KeycloakGroup, is_list=True)
+    def get_group_children(self, group_id: str) -> list[KeycloakGroup]:
+        """Return the direct child groups of a group
+
+        Args:
+            group_id (str): The parent group's id
+
+        Returns:
+            List[KeycloakGroup]: The group's direct subgroups
+
+        Notes:
+            - Keycloak no longer inlines `subGroups` in the responses of `get_all_groups`/`get_group`; they
+              have to be fetched per-group through this dedicated endpoint instead.
+
+        Raises:
+            KeycloakError: If the resulting response is not a successful HTTP-Code (>299)
+        """
+        return self._admin_request(
+            url=f"{self.groups_uri}/{group_id}/children",
+            method=HTTPMethod.GET,
+        )
+
     def get_subgroups(self, group: KeycloakGroup, path: str):
         """Utility function to iterate through nested group structures
 
@@ -735,13 +760,11 @@ class FastAPIKeycloak(FastAPIKeycloakAuth):
         Returns:
             KeycloakGroup: Keycloak group representation or none if not exists
         """
-        for subgroup in group.subGroups:
+        for subgroup in self.get_group_children(group.id):
             if subgroup.path == path:
                 return subgroup
-            elif subgroup.subGroups:
-                for subgroup in group.subGroups:
-                    if subgroups := self.get_subgroups(subgroup, path):
-                        return subgroups
+            if subgroups := self.get_subgroups(subgroup, path):
+                return subgroups
         # Went through the tree without hits
         return None
 
@@ -759,18 +782,25 @@ class FastAPIKeycloak(FastAPIKeycloakAuth):
         Raises:
             KeycloakError: If the resulting response is not a successful HTTP-Code (>299)
         """
-        groups = self.get_all_groups()
+        segments = [segment for segment in path.split("/") if segment]
+        if not segments:
+            return None
 
-        for group in groups:
-            if group.path == path:
-                return group
-            elif search_in_subgroups and group.subGroups:
-                for group in group.subGroups:
-                    if group.path == path:
-                        return group
-                    res = self.get_subgroups(group, path)
-                    if res is not None:
-                        return res
+        group = next((g for g in self.get_all_groups() if g.name == segments[0]), None)
+        if group is None:
+            return None
+
+        if len(segments) > 1:
+            if not search_in_subgroups:
+                return None
+            for segment in segments[1:]:
+                group = next((g for g in self.get_group_children(group.id) if g.name == segment), None)
+                if group is None:
+                    return None
+
+        # Populate the direct children, matching the shape older Keycloak versions inlined by default
+        group.subGroups = self.get_group_children(group.id)
+        return group
 
     @result_or_error(response_model=KeycloakGroup)
     def get_group(self, group_id: str) -> KeycloakGroup or None:

@@ -63,7 +63,12 @@
           "realm": [
             "offline_access",
             "uma_authorization"
-          ]
+          ],
+          "client": {
+            "account": [
+              "manage-account"
+            ]
+          }
         },
         "clientRole": false,
         "containerId": "Test",
@@ -567,7 +572,7 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": true,
-      "authorizationServicesEnabled": true,
+      "authorizationServicesEnabled": false,
       "publicClient": false,
       "frontchannelLogout": false,
       "protocol": "openid-connect",
@@ -578,6 +583,7 @@
         "saml.multivalued.roles": "false",
         "saml.encrypt": "false",
         "oauth2.device.authorization.grant.enabled": "true",
+        "client.use.lightweight.access.token.enabled": "false",
         "backchannel.logout.revoke.offline.tokens": "false",
         "saml.server.signature": "false",
         "saml.server.signature.keyinfo.ext": "false",
@@ -656,50 +662,7 @@
         "phone",
         "offline_access",
         "microprofile-jwt"
-      ],
-      "authorizationSettings": {
-        "allowRemoteResourceManagement": true,
-        "policyEnforcementMode": "ENFORCING",
-        "resources": [
-          {
-            "name": "Default Resource",
-            "type": "urn:admin-cli:resources:default",
-            "ownerManagedAccess": false,
-            "attributes": {},
-            "_id": "98ea544d-9474-4cde-a7d5-f4aa8438596b",
-            "uris": [
-              "/*"
-            ]
-          }
-        ],
-        "policies": [
-          {
-            "id": "3747a4f9-0b6b-4ad0-aba4-181193729727",
-            "name": "Default Policy",
-            "description": "A policy that grants access only for users within this realm",
-            "type": "js",
-            "logic": "POSITIVE",
-            "decisionStrategy": "AFFIRMATIVE",
-            "config": {
-              "code": "// by default, grants any permission associated with this policy\n$evaluation.grant();\n"
-            }
-          },
-          {
-            "id": "762a6303-aab7-439b-8a41-0973964640ce",
-            "name": "Default Permission",
-            "description": "A permission that applies to the default resource type",
-            "type": "resource",
-            "logic": "POSITIVE",
-            "decisionStrategy": "UNANIMOUS",
-            "config": {
-              "defaultResourceType": "urn:admin-cli:resources:default",
-              "applyPolicies": "[\"Default Policy\"]"
-            }
-          }
-        ],
-        "scopes": [],
-        "decisionStrategy": "UNANIMOUS"
-      }
+      ]
     },
     {
       "id": "1d1a4841-fbfe-4bda-9bc8-fdc73497aa5c",
@@ -858,7 +821,7 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": true,
-      "authorizationServicesEnabled": true,
+      "authorizationServicesEnabled": false,
       "publicClient": false,
       "frontchannelLogout": false,
       "protocol": "openid-connect",
@@ -947,50 +910,7 @@
         "phone",
         "offline_access",
         "microprofile-jwt"
-      ],
-      "authorizationSettings": {
-        "allowRemoteResourceManagement": true,
-        "policyEnforcementMode": "ENFORCING",
-        "resources": [
-          {
-            "name": "Default Resource",
-            "type": "urn:test-client:resources:default",
-            "ownerManagedAccess": false,
-            "attributes": {},
-            "_id": "c4c07a91-21b2-4259-b923-4b3d6b05d93f",
-            "uris": [
-              "/*"
-            ]
-          }
-        ],
-        "policies": [
-          {
-            "id": "b1174446-ce63-4d3d-8829-f1b960a76b42",
-            "name": "Default Policy",
-            "description": "A policy that grants access only for users within this realm",
-            "type": "js",
-            "logic": "POSITIVE",
-            "decisionStrategy": "AFFIRMATIVE",
-            "config": {
-              "code": "// by default, grants any permission associated with this policy\n$evaluation.grant();\n"
-            }
-          },
-          {
-            "id": "c595a3a7-c4d3-47b1-896d-50e5396d1eee",
-            "name": "Default Permission",
-            "description": "A permission that applies to the default resource type",
-            "type": "resource",
-            "logic": "POSITIVE",
-            "decisionStrategy": "UNANIMOUS",
-            "config": {
-              "defaultResourceType": "urn:test-client:resources:default",
-              "applyPolicies": "[\"Default Policy\"]"
-            }
-          }
-        ],
-        "scopes": [],
-        "decisionStrategy": "UNANIMOUS"
-      }
+      ]
     }
   ],
   "clientScopes": [
