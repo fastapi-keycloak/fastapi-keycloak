@@ -1,18 +1,15 @@
-from typing import List, Optional
-
 import uvicorn
-from fastapi import FastAPI, Depends, Query, Body, Request
+from fastapi import Body, Depends, FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import SecretStr
 
 from fastapi_keycloak import (
     FastAPIKeycloak,
+    HTTPMethod,
+    KeycloakError,
+    KeycloakUser,
     OIDCUser,
     UsernamePassword,
-    HTTPMethod,
-    KeycloakUser,
-    KeycloakGroup,
-    KeycloakError
 )
 
 app = FastAPI()
@@ -22,7 +19,7 @@ idp = FastAPIKeycloak(
     client_secret="GzgACcJzhzQ4j8kWhmhazt7WSdxDVUyE",
     admin_client_secret="BIcczGsZ6I8W5zf0rZg5qSexlloQLPKB",
     realm="Test",
-    callback_uri="http://localhost:8081/callback"
+    callback_uri="http://localhost:8081/callback",
 )
 idp.add_swagger_config(app)
 
@@ -35,8 +32,9 @@ async def keycloak_exception_handler(request: Request, exc: KeycloakError):
         content={"message": exc.reason},
     )
 
-    
+
 # Admin
+
 
 @app.post("/proxy", tags=["admin-cli"])
 def proxy_admin_request(
@@ -45,12 +43,7 @@ def proxy_admin_request(
     additional_headers: dict = Body(None),
     payload: dict = Body(None),
 ):
-    return idp.proxy(
-        additional_headers=additional_headers,
-        relative_path=relative_path,
-        method=method,
-        payload=payload
-    )
+    return idp.proxy(additional_headers=additional_headers, relative_path=relative_path, method=method, payload=payload)
 
 
 @app.get("/identity-providers", tags=["admin-cli"])
@@ -65,6 +58,7 @@ def get_idp_config():
 
 # User Management
 
+
 @app.get("/users", tags=["user-management"])
 def get_users():
     return idp.get_all_users()
@@ -76,16 +70,14 @@ def get_user_by_query(query: str = None):
 
 
 @app.post("/users", tags=["user-management"])
-def create_user(
-    first_name: str, last_name: str, email: str, password: SecretStr, id: str = None
-):
+def create_user(first_name: str, last_name: str, email: str, password: SecretStr, id: str = None):
     return idp.create_user(
         first_name=first_name,
         last_name=last_name,
         username=email,
         email=email,
         password=password.get_secret_value(),
-        id=id
+        id=id,
     )
 
 
@@ -116,6 +108,7 @@ def send_email_verification(user_id: str):
 
 # Role Management
 
+
 @app.get("/roles", tags=["role-management"])
 def get_all_roles():
     return idp.get_all_roles()
@@ -138,6 +131,7 @@ def delete_roles(role_name: str):
 
 # Group Management
 
+
 @app.get("/groups", tags=["group-management"])
 def get_all_groups():
     return idp.get_all_groups()
@@ -154,7 +148,7 @@ def get_group_by_path(path: str):
 
 
 @app.post("/groups", tags=["group-management"])
-def add_group(group_name: str, parent_id: Optional[str] = None):
+def add_group(group_name: str, parent_id: str | None = None):
     return idp.create_group(group_name=group_name, parent=parent_id)
 
 
@@ -165,8 +159,9 @@ def delete_groups(group_id: str):
 
 # User Roles
 
+
 @app.post("/users/{user_id}/roles", tags=["user-roles"])
-def add_roles_to_user(user_id: str, roles: Optional[List[str]] = Query(None)):
+def add_roles_to_user(user_id: str, roles: list[str] | None = Query(None)):
     return idp.add_user_roles(user_id=user_id, roles=roles)
 
 
@@ -176,11 +171,12 @@ def get_user_roles(user_id: str):
 
 
 @app.delete("/users/{user_id}/roles", tags=["user-roles"])
-def delete_roles_from_user(user_id: str, roles: Optional[List[str]] = Query(None)):
+def delete_roles_from_user(user_id: str, roles: list[str] | None = Query(None)):
     return idp.remove_user_roles(user_id=user_id, roles=roles)
 
 
 # User Groups
+
 
 @app.post("/users/{user_id}/groups", tags=["user-groups"])
 def add_group_to_user(user_id: str, group_id: str):
@@ -199,6 +195,7 @@ def delete_groups_from_user(user_id: str, group_id: str):
 
 # Example User Requests
 
+
 @app.get("/protected", tags=["example-user-request"])
 def protected(user: OIDCUser = Depends(idp.get_current_user())):
     return user
@@ -216,12 +213,11 @@ def company_admin(user: OIDCUser = Depends(idp.get_current_user(required_roles=[
 
 @app.post("/login", tags=["example-user-request"])
 def login(user: UsernamePassword = Body(...)):
-    return idp.user_login(
-        username=user.username, password=user.password.get_secret_value()
-    )
+    return idp.user_login(username=user.username, password=user.password.get_secret_value())
 
 
 # Auth Flow
+
 
 @app.get("/login-link", tags=["auth-flow"])
 def login_redirect():

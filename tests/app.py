@@ -1,18 +1,9 @@
-from typing import List, Optional
-
 import uvicorn
-from fastapi import FastAPI, Depends, Query, Body, Request
+from fastapi import Body, Depends, FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import SecretStr
 
-from fastapi_keycloak import (
-    FastAPIKeycloak,
-    HTTPMethod,
-    KeycloakUser,
-    OIDCUser,
-    UsernamePassword,
-    KeycloakError
-)
+from fastapi_keycloak import FastAPIKeycloak, HTTPMethod, KeycloakError, KeycloakUser, OIDCUser, UsernamePassword
 
 app = FastAPI()
 idp = FastAPIKeycloak(
@@ -36,7 +27,7 @@ async def keycloak_exception_handler(request: Request, exc: KeycloakError):
         content={"message": exc.reason},
     )
 
-    
+
 # Admin
 
 
@@ -79,9 +70,7 @@ def get_user_by_query(query: str = None):
 
 
 @app.post("/users", tags=["user-management"])
-def create_user(
-    first_name: str, last_name: str, email: str, password: SecretStr, id: str = None
-):
+def create_user(first_name: str, last_name: str, email: str, password: SecretStr, id: str = None):
     return idp.create_user(
         first_name=first_name,
         last_name=last_name,
@@ -159,7 +148,7 @@ def get_group_by_path(path: str):
 
 
 @app.post("/groups", tags=["group-management"])
-def add_group(group_name: str, parent_id: Optional[str] = None):
+def add_group(group_name: str, parent_id: str | None = None):
     return idp.create_group(group_name=group_name, parent=parent_id)
 
 
@@ -172,7 +161,7 @@ def delete_groups(group_id: str):
 
 
 @app.post("/users/{user_id}/roles", tags=["user-roles"])
-def add_roles_to_user(user_id: str, roles: Optional[List[str]] = Query(None)):
+def add_roles_to_user(user_id: str, roles: list[str] | None = Query(None)):
     return idp.add_user_roles(user_id=user_id, roles=roles)
 
 
@@ -182,7 +171,7 @@ def get_user_roles(user_id: str):
 
 
 @app.delete("/users/{user_id}/roles", tags=["user-roles"])
-def delete_roles_from_user(user_id: str, roles: Optional[List[str]] = Query(None)):
+def delete_roles_from_user(user_id: str, roles: list[str] | None = Query(None)):
     return idp.remove_user_roles(user_id=user_id, roles=roles)
 
 
@@ -226,9 +215,7 @@ def company_admin(
 
 @app.post("/login", tags=["example-user-request"])
 def login(user: UsernamePassword = Body(...)):
-    return idp.user_login(
-        username=user.username, password=user.password.get_secret_value()
-    )
+    return idp.user_login(username=user.username, password=user.password.get_secret_value())
 
 
 # Auth Flow

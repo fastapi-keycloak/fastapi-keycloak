@@ -18,12 +18,12 @@ classifiers = [
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Framework :: FastAPI',
     'License :: OSI Approved :: Apache Software License',
-    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dynamic = ["version", "readme"]
 description = "Keycloak API Client for integrating authentication and authorization with FastAPI"
 dependencies = [
@@ -32,16 +32,12 @@ dependencies = [
     "certifi>=2023.7.22",
     "charset-normalizer>=2.0.9",
     "click>=8.0.3",
-    "ecdsa>=0.17.0",
     "fastapi>=0.70.1",
     "h11>=0.12.0",
     "idna>=3.3",
-    "pyasn1>=0.4.8",
     "pydantic>=1.5a1",
-    "python-jose>=3.4.0",
+    "pyjwt[crypto]>=2.9.0",
     "requests>=2.31.0",
-    "rsa>=4.8",
-    "six>=1.16.0",
     "sniffio>=1.2.0",
     "starlette>=0.36.2",
     "typing_extensions>=4.0.1",
@@ -53,14 +49,36 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.3.4",
-    "pytest-cov>=6.0.0"
+    "pytest-cov>=6.0.0",
+    "responses>=0.25.0",
+    "ruff>=0.8.0",
+]
+docs = [
+    "sphinx>=8.0.0",
+    "myst-parser>=4.0.0",
+    "furo>=2024.8.6",
+    "sphinx-copybutton>=0.5.2",
 ]
 
 [project.urls]
-documentation = "https://fastapi-keycloak.code-specialist.com/"
+documentation = "https://fastapi-keycloak.readthedocs.io/"
 repository = "https://github.com/fastapi-keycloak/fastapi-keycloak"
 issues = "https://github.com/fastapi-keycloak/fastapi-keycloak/issues"
 
 [tool.setuptools.dynamic]
 version = {attr = "fastapi_keycloak.__version__"}
 readme = {file = ["README.md"], content-type = "text/markdown"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p no:warnings --cov-report=term-missing --cov-report=xml --no-cov-on-fail --cov=fastapi_keycloak"
+markers = [
+    "integration: requires a live Keycloak+Postgres instance (see tests/start_infra.sh)",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

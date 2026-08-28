@@ -1,9 +1,9 @@
 # FastAPI Keycloak Integration
 
-![Py3.9](https://img.shields.io/badge/-Python%203.9-brightgreen)
 ![Py3.10](https://img.shields.io/badge/-Python%203.10-brightgreen)
 ![Py3.11](https://img.shields.io/badge/-Python%203.11-brightgreen)
 ![Py3.12](https://img.shields.io/badge/-Python%203.12-brightgreen)
+![Py3.13](https://img.shields.io/badge/-Python%203.13-brightgreen)
 
 ## Introduction
 
@@ -11,9 +11,38 @@ Welcome to `fastapi-keycloak`. This projects goal is to ease the integration of 
 encouraged due to specific features. Currently, this package supports only the `password` and the `authorization_code`. However, the `get_current_user()` method accepts any JWT
 that was signed using Keycloak´s private key.
 
+## Installation
+
+```shell
+pip install fastapi_keycloak
+```
+
+## Usage
+
+```python
+from fastapi import FastAPI, Depends
+from fastapi_keycloak import FastAPIKeycloak, OIDCUser
+
+app = FastAPI()
+idp = FastAPIKeycloak(
+    server_url="https://auth.some-domain.com/auth",
+    client_id="some-client",
+    client_secret="some-secret",
+    admin_client_secret="some-admin-cli-secret",
+    realm="some-realm-name",
+    callback_uri="http://localhost:8081/callback",
+)
+idp.add_swagger_config(app)
+
+
+@app.get("/protected")
+def protected(user: OIDCUser = Depends(idp.get_current_user())):
+    return f"Hi {user}"
+```
+
 ## Docs
 
-Docs are available at [https://fastapi-keycloak.code-specialist.com/](https://fastapi-keycloak.code-specialist.com/).
+Docs are available at [https://fastapi-keycloak.readthedocs.io/](https://fastapi-keycloak.readthedocs.io/).
 
 ## TLDR
 
@@ -30,14 +59,8 @@ FastAPI Keycloak enables you to do the following things without writing a single
 ## Contributions
 
 We would like encourage anyone using this package to contribute to its improvement, if anything isn't working as expected or isn't well enough documented, please open an issue or a
-pull request. Please note that for any code contribution tests are required.
-
-### Testing
-
-Tests are stored and executed in `./tests`. To test the package, it is necessary to use the `start_infra.sh` script upfront, to set up Keycloak and Postgres. We do this to avoid
-artificial testing conditions that occur by mocking all the keycloak requests. The issue here is that we currently see no way to offer public testing opportunities without
-significant security issues, which is why you have to run these tests locally and provide a `test_coverage.xml` file. The test coverage is configured in the `pytest.ini` and will
-be created once the tests finished running (locally).
+pull request. Please note that for any code contribution tests are required. See [AGENTS.md](AGENTS.md) for the full contributor guide, including how to run the test suite,
+lint/format the code, and build the docs locally.
 
 ## Original authors
 

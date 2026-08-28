@@ -1,7 +1,6 @@
 from enum import Enum
-from typing import List, Optional
 
-from pydantic import BaseModel, SecretStr, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from fastapi_keycloak.exceptions import KeycloakError
 
@@ -52,15 +51,15 @@ class KeycloakUser(BaseModel):
     enabled: bool
     totp: bool
     emailVerified: bool
-    firstName: Optional[str] = None
-    lastName: Optional[str] = None
-    email: Optional[str] = None
-    disableableCredentialTypes: List[str]
-    requiredActions: List[str]
-    realmRoles: Optional[List[str]] = None
+    firstName: str | None = None
+    lastName: str | None = None
+    email: str | None = None
+    disableableCredentialTypes: list[str]
+    requiredActions: list[str]
+    realmRoles: list[str] | None = None
     notBefore: int
-    access: Optional[dict] = None
-    attributes: Optional[dict] = None
+    access: dict | None = None
+    attributes: dict | None = None
 
 
 class UsernamePassword(BaseModel):
@@ -97,23 +96,23 @@ class OIDCUser(BaseModel):
     details. This is a mere proxy object.
     """
 
-    azp: Optional[str] = None
+    azp: str | None = None
     sub: str
     iat: int
     exp: int
-    scope: Optional[str] = None
+    scope: str | None = None
     email_verified: bool
-    name: Optional[str] = None
-    given_name: Optional[str] = None
-    family_name: Optional[str] = None
-    email: Optional[str] = None
-    preferred_username: Optional[str] = None
-    realm_access: Optional[dict] = None
-    resource_access: Optional[dict] = None
+    name: str | None = None
+    given_name: str | None = None
+    family_name: str | None = None
+    email: str | None = None
+    preferred_username: str | None = None
+    realm_access: dict | None = None
+    resource_access: dict | None = None
     extra_fields: dict = Field(default_factory=dict)
 
     @property
-    def roles(self) -> List[str]:
+    def roles(self) -> list[str]:
         """Returns the roles of the user
 
         Returns:
@@ -136,7 +135,7 @@ class OIDCUser(BaseModel):
             raise KeycloakError(
                 status_code=404,
                 reason="The 'realm_access' and 'resource_access' sections of the provided access token did not "
-                       "contain any 'roles'",
+                "contain any 'roles'",
             )
         return roles
 
@@ -211,8 +210,8 @@ class KeycloakToken(BaseModel):
     """
 
     access_token: str
-    refresh_token: Optional[str] = None
-    id_token: Optional[str] = None
+    refresh_token: str | None = None
+    id_token: str | None = None
 
     def __str__(self):
         """String representation of KeycloakToken"""
@@ -231,9 +230,9 @@ class KeycloakGroup(BaseModel):
 
     id: str
     name: str
-    path: Optional[str] = None
-    realmRoles: Optional[List[str]] = None
-    subGroups: Optional[List["KeycloakGroup"]] = None
+    path: str | None = None
+    realmRoles: list[str] | None = None
+    subGroups: list["KeycloakGroup"] | None = None
 
 
 KeycloakGroup.update_forward_refs()
