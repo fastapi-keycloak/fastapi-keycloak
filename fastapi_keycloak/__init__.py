@@ -2,7 +2,7 @@
 
 __version__ = "2.0.0rc1"
 
-from fastapi_keycloak.api import FastAPIKeycloak
+from fastapi_keycloak.api import FastAPIKeycloak, FastAPIKeycloakAuth
 from fastapi_keycloak.model import (
     HTTPMethod,
     KeycloakError,
@@ -17,6 +17,7 @@ from fastapi_keycloak.model import (
 
 __all__ = [
     FastAPIKeycloak.__name__,
+    FastAPIKeycloakAuth.__name__,
     OIDCUser.__name__,
     UsernamePassword.__name__,
     HTTPMethod.__name__,
