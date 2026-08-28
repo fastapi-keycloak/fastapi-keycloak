@@ -3,16 +3,43 @@ name: Test-Suite
 on:
   workflow_dispatch:
   pull_request:
-    types: [review_requested]
+    types: [opened, synchronize, reopened]
   push:
 
 jobs:
-  build:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --upgrade pip
+      - run: pip install .[dev]
+      - run: ruff check .
+      - run: ruff format --check .
+
+  unit-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.9', '3.10', '3.11', '3.12' ]
-    name: Test-Suite for Python ${{ matrix.python-version }}
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    name: Unit tests for Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip wheel
+      - run: pip install .[dev]
+      - run: pytest tests/unit --cov-report=xml:coverage-${{ matrix.python-version }}.xml
+      - uses: codecov/codecov-action@v5
+        with:
+          fail_ci_if_error: false
+          files: coverage-${{ matrix.python-version }}.xml
+
+  integration-tests:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -21,29 +48,20 @@ jobs:
           cd tests
           bash ./start_infra.sh
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.13"
 
-      - name: Install Pip
-        run: |
-          python -m pip install --upgrade pip wheel
-
-      - name: Install dependencies
-        run: |
-          python -m pip install .
+      - run: python -m pip install --upgrade pip wheel
+      - run: pip install .[dev]
 
       - name: Wait for Infrastructure to be ready
         run: |
           chmod +x tests/wait_for_service.sh & bash tests/wait_for_service.sh http://localhost:8085 200 100
 
-      - name: Test with pytest
-        run: |
-          pytest tests
+      - run: pytest tests/integration
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: false
 
@@ -52,3 +70,14 @@ jobs:
         run: |
           cd tests
           bash ./stop_infra.sh
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --upgrade pip
+      - run: pip install .[docs]
+      - run: sphinx-build -b html docs docs/_build/html -W

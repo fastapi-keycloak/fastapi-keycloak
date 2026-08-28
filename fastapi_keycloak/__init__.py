@@ -1,6 +1,6 @@
 """Keycloak API Client for integrating authentication and authorization with FastAPI"""
 
-__version__ = "1.1.0-rc"
+__version__ = "2.0.0rc1"
 
 from fastapi_keycloak.api import FastAPIKeycloak, FastAPIKeycloakAuth
 from fastapi_keycloak.model import (

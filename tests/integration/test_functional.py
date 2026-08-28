@@ -1,5 +1,3 @@
-from typing import List
-
 import pytest as pytest
 from fastapi import HTTPException
 
@@ -19,12 +17,11 @@ from fastapi_keycloak.model import (
     KeycloakUser,
     OIDCUser,
 )
-from tests import BaseTestClass
 
 TEST_PASSWORD = "test-password"
 
 
-class TestAPIFunctional(BaseTestClass):
+class TestAPIFunctional:
     @pytest.fixture
     def user(self, idp):
         return idp.create_user(
@@ -131,7 +128,7 @@ class TestAPIFunctional(BaseTestClass):
         assert isinstance(test_role_mars, KeycloakRole)
 
         # Check the roles again
-        user_alice_roles: List[KeycloakRole] = idp.get_user_roles(user_id=user_alice.id)
+        user_alice_roles: list[KeycloakRole] = idp.get_user_roles(user_id=user_alice.id)
         assert len(user_alice_roles) == 1
         for role in user_alice_roles:
             assert role.name in ["default-roles-test"]
@@ -143,16 +140,14 @@ class TestAPIFunctional(BaseTestClass):
 
         # Assign role to Alice
         idp.add_user_roles(user_id=user_alice.id, roles=[test_role_saturn.name])
-        user_alice_roles: List[KeycloakRole] = idp.get_user_roles(user_id=user_alice.id)
+        user_alice_roles: list[KeycloakRole] = idp.get_user_roles(user_id=user_alice.id)
         assert len(user_alice_roles) == 2
         for role in user_alice_roles:
             assert role.name in ["default-roles-test", test_role_saturn.name]
 
         # Assign roles to Bob
-        idp.add_user_roles(
-            user_id=user_bob.id, roles=[test_role_saturn.name, test_role_mars.name]
-        )
-        user_bob_roles: List[KeycloakRole] = idp.get_user_roles(user_id=user_bob.id)
+        idp.add_user_roles(user_id=user_bob.id, roles=[test_role_saturn.name, test_role_mars.name])
+        user_bob_roles: list[KeycloakRole] = idp.get_user_roles(user_id=user_bob.id)
         assert len(user_bob_roles) == 3
         for role in user_bob_roles:
             assert role.name in [
@@ -162,20 +157,14 @@ class TestAPIFunctional(BaseTestClass):
             ]
 
         # Exchange the details for access tokens
-        keycloak_token_alice: KeycloakToken = idp.user_login(
-            username=user_alice.username, password=TEST_PASSWORD
-        )
+        keycloak_token_alice: KeycloakToken = idp.user_login(username=user_alice.username, password=TEST_PASSWORD)
         assert idp.token_is_valid(keycloak_token_alice.access_token)
-        keycloak_token_bob: KeycloakToken = idp.user_login(
-            username=user_bob.username, password=TEST_PASSWORD
-        )
+        keycloak_token_bob: KeycloakToken = idp.user_login(username=user_bob.username, password=TEST_PASSWORD)
         assert idp.token_is_valid(keycloak_token_bob.access_token)
 
         # Check get_current_user Alice
         current_user_function = idp.get_current_user()
-        current_user: OIDCUser = current_user_function(
-            token=keycloak_token_alice.access_token
-        )
+        current_user: OIDCUser = current_user_function(token=keycloak_token_alice.access_token)
         assert current_user.sub == user_alice.id
         assert len(current_user.roles) == 4  # Also includes all implicit roles
         for role in current_user.roles:
@@ -188,9 +177,7 @@ class TestAPIFunctional(BaseTestClass):
 
         # Check get_current_user Bob
         current_user_function = idp.get_current_user()
-        current_user: OIDCUser = current_user_function(
-            token=keycloak_token_bob.access_token
-        )
+        current_user: OIDCUser = current_user_function(token=keycloak_token_bob.access_token)
         assert current_user.sub == user_bob.id
         assert len(current_user.roles) == 5  # Also includes all implicit roles
         for role in current_user.roles:
@@ -203,38 +190,26 @@ class TestAPIFunctional(BaseTestClass):
             ]
 
         # Check get_current_user Alice with role Saturn
-        current_user_function = idp.get_current_user(
-            required_roles=[test_role_saturn.name]
-        )
+        current_user_function = idp.get_current_user(required_roles=[test_role_saturn.name])
         # Get Alice
-        current_user: OIDCUser = current_user_function(
-            token=keycloak_token_alice.access_token
-        )
+        current_user: OIDCUser = current_user_function(token=keycloak_token_alice.access_token)
         assert current_user.sub == user_alice.id
         # Get Bob
-        current_user: OIDCUser = current_user_function(
-            token=keycloak_token_bob.access_token
-        )
+        current_user: OIDCUser = current_user_function(token=keycloak_token_bob.access_token)
         assert current_user.sub == user_bob.id
 
         # Check get_current_user Alice with role Mars
-        current_user_function = idp.get_current_user(
-            required_roles=[test_role_mars.name]
-        )
+        current_user_function = idp.get_current_user(required_roles=[test_role_mars.name])
         # Get Alice
         with pytest.raises(HTTPException):
-            current_user_function(
-                token=keycloak_token_alice.access_token
-            )  # Alice does not posses this role
+            current_user_function(token=keycloak_token_alice.access_token)  # Alice does not posses this role
         # Get Bob
-        current_user: OIDCUser = current_user_function(
-            token=keycloak_token_bob.access_token
-        )
+        current_user: OIDCUser = current_user_function(token=keycloak_token_bob.access_token)
         assert current_user.sub == user_bob.id
 
         # Remove Role Mars from Bob
         idp.remove_user_roles(user_id=user_bob.id, roles=[test_role_mars.name])
-        user_bob_roles: List[KeycloakRole] = idp.get_user_roles(user_id=user_bob.id)
+        user_bob_roles: list[KeycloakRole] = idp.get_user_roles(user_id=user_bob.id)
         assert len(user_bob_roles) == 2
         for role in user_bob_roles:
             assert role.name in [
@@ -248,7 +223,7 @@ class TestAPIFunctional(BaseTestClass):
         idp.delete_role(role_name=test_role_saturn.name)
 
         # Check Alice
-        user_alice_roles: List[KeycloakRole] = idp.get_user_roles(user_id=user_alice.id)
+        user_alice_roles: list[KeycloakRole] = idp.get_user_roles(user_id=user_alice.id)
         assert len(user_alice_roles) == 1
         for role in user_alice_roles:
             assert role.name in ["default-roles-test"]
@@ -280,12 +255,8 @@ class TestAPIFunctional(BaseTestClass):
         )
         assert user
 
-        user_token: KeycloakToken = idp.user_login(
-            username=user.username, password=TEST_PASSWORD
-        )
-        decoded_token = idp._decode_token(
-            token=user_token.access_token, audience="account"
-        )
+        user_token: KeycloakToken = idp.user_login(username=user.username, password=TEST_PASSWORD)
+        decoded_token = idp._decode_token(token=user_token.access_token, audience="account")
         oidc_user: OIDCUser = OIDCUser.parse_obj(decoded_token)
         for role in ["role_a", "role_b"]:
             assert role in oidc_user.roles
@@ -331,42 +302,34 @@ class TestAPIFunctional(BaseTestClass):
         assert bar_group.name == "Bar Group"
 
         # Check if groups are registered
-        all_groups: List[KeycloakGroup] = idp.get_all_groups()
+        all_groups: list[KeycloakGroup] = idp.get_all_groups()
         assert len(all_groups) == 2
 
         # Check get_groups
-        groups: List[KeycloakGroup] = idp.get_groups(group_names=[foo_group.name])
+        groups: list[KeycloakGroup] = idp.get_groups(group_names=[foo_group.name])
         assert len(groups) == 1
         assert groups[0].name == foo_group.name
 
         # Create Subgroup 1 by parent object
-        subgroup1: KeycloakGroup = idp.create_group(
-            group_name="Subgroup 01", parent=foo_group
-        )
+        subgroup1: KeycloakGroup = idp.create_group(group_name="Subgroup 01", parent=foo_group)
         assert subgroup1 is not None
         assert subgroup1.name == "Subgroup 01"
         assert subgroup1.path == f"{foo_group.path}/Subgroup 01"
 
         # Create Subgroup 2 by parent id
-        subgroup2: KeycloakGroup = idp.create_group(
-            group_name="Subgroup 02", parent=foo_group.id
-        )
+        subgroup2: KeycloakGroup = idp.create_group(group_name="Subgroup 02", parent=foo_group.id)
         assert subgroup2 is not None
         assert subgroup2.name == "Subgroup 02"
         assert subgroup2.path == f"{foo_group.path}/Subgroup 02"
 
         # Create Subgroup Level 3
-        subgroup_l3: KeycloakGroup = idp.create_group(
-            group_name="Subgroup l3", parent=subgroup2
-        )
+        subgroup_l3: KeycloakGroup = idp.create_group(group_name="Subgroup l3", parent=subgroup2)
         assert subgroup_l3 is not None
         assert subgroup_l3.name == "Subgroup l3"
         assert subgroup_l3.path == f"{subgroup2.path}/Subgroup l3"
 
         # Create Subgroup Level 4
-        subgroup_l4: KeycloakGroup = idp.create_group(
-            group_name="Subgroup l4", parent=subgroup_l3
-        )
+        subgroup_l4: KeycloakGroup = idp.create_group(group_name="Subgroup l4", parent=subgroup_l3)
         assert subgroup_l4 is not None
         assert subgroup_l4.name == "Subgroup l4"
         assert subgroup_l4.path == f"{subgroup_l3.path}/Subgroup l4"
@@ -435,23 +398,19 @@ class TestAPIFunctional(BaseTestClass):
         user.requiredActions.append(action)  # Add an action
         user: KeycloakUser = idp.update_user(user=user)  # Save the change
 
-        with pytest.raises(
-            exception
-        ):  # Expect the login to fail due to the verify email action
+        with pytest.raises(exception):  # Expect the login to fail due to the verify email action
             idp.user_login(username=user.username, password=TEST_PASSWORD)
 
         user.requiredActions.remove(action)  # Remove the action
         user: KeycloakUser = idp.update_user(user=user)  # Save the change
-        assert idp.user_login(
-            username=user.username, password=TEST_PASSWORD
-        )  # Login possible again
+        assert idp.user_login(username=user.username, password=TEST_PASSWORD)  # Login possible again
 
         # Clean up
         idp.delete_user(user_id=user.id)
 
     def test_user_not_found_exception(self, idp):
         with pytest.raises(UserNotFound):  # Expect the get to fail due to a non existent user
-            idp.get_user(user_id='abc')
+            idp.get_user(user_id="abc")
 
         with pytest.raises(UserNotFound):  # Expect the get to fail due to a failed query search
             idp.get_user(query='username="some_non_existant_username"')
