@@ -19,6 +19,7 @@ extensions = [
     "sphinx_copybutton",
 ]
 myst_enable_extensions = ["colon_fence", "deflist"]
+myst_heading_anchors = 2
 source_suffix = {
     ".rst": "restructuredtext",
     ".md": "markdown",

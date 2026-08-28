@@ -40,6 +40,23 @@ def protected(user: OIDCUser = Depends(idp.get_current_user())):
     return f"Hi {user}"
 ```
 
+If your service only needs to authenticate requests (no user/role/group management), use `FastAPIKeycloakAuth`
+instead — it requires no `admin_client_secret`:
+
+```python
+from fastapi_keycloak import FastAPIKeycloakAuth
+
+idp = FastAPIKeycloakAuth(
+    server_url="https://auth.some-domain.com/auth",
+    client_id="some-client",
+    client_secret="some-secret",
+    realm="some-realm-name",
+    callback_uri="http://localhost:8081/callback",
+)
+```
+
+`FastAPIKeycloak` extends `FastAPIKeycloakAuth` with the full admin API, so existing code keeps working unchanged.
+
 ## Docs
 
 Docs are available at [https://fastapi-keycloak.readthedocs.io/](https://fastapi-keycloak.readthedocs.io/).

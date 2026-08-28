@@ -5,7 +5,8 @@ Contributor guide for `fastapi-keycloak`, a Python client that wraps the Keycloa
 ## Repo layout
 
 - `fastapi_keycloak/` — the package itself.
-  - `api.py` — `FastAPIKeycloak`, the main client class (auth flows, user/role/group management, JWT decoding).
+  - `api.py` — `FastAPIKeycloakAuth` (token validation/decoding, auth flows; no admin credentials) and
+    `FastAPIKeycloak` (subclass adding the admin API: user/role/group management, password-grant login).
   - `model.py` — pydantic models for Keycloak resources (`KeycloakUser`, `OIDCUser`, `KeycloakToken`, etc.).
   - `exceptions.py` — `KeycloakError` and the `MandatoryActionException` family.
 - `tests/unit/` — fast tests with no external dependencies (mocked HTTP via `responses`, a throwaway RSA keypair

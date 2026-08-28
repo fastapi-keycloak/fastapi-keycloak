@@ -4,7 +4,7 @@ import responses
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from fastapi_keycloak import FastAPIKeycloak
+from fastapi_keycloak import FastAPIKeycloak, FastAPIKeycloakAuth
 
 SERVER_URL = "http://localhost:8085/auth"
 REALM = "Test"
@@ -78,3 +78,19 @@ def idp(monkeypatch, rsa_keypair, sign_token):
     finally:
         responses.stop()
         responses.reset()
+
+
+@pytest.fixture
+def idp_auth(monkeypatch, rsa_keypair):
+    """A FastAPIKeycloakAuth instance. Unlike `idp`, construction makes no HTTP calls at all — there's
+    no admin token to fetch on startup, which is the whole point of the auth-only class."""
+    _, public_pem = rsa_keypair
+    monkeypatch.setattr(FastAPIKeycloakAuth, "public_key", property(lambda self: public_pem.decode()))
+
+    return FastAPIKeycloakAuth(
+        server_url=SERVER_URL,
+        client_id="test-client",
+        client_secret="test-client-secret",
+        realm=REALM,
+        callback_uri="http://localhost:8081/callback",
+    )

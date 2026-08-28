@@ -1,14 +1,13 @@
 import uvicorn
 from fastapi import Depends, FastAPI
 
-from fastapi_keycloak import FastAPIKeycloak, OIDCUser
+from fastapi_keycloak import FastAPIKeycloakAuth, OIDCUser
 
 app = FastAPI()
-idp = FastAPIKeycloak(
+idp = FastAPIKeycloakAuth(
     server_url="https://auth.some-domain.com/auth",
     client_id="some-client",
     client_secret="some-client-secret",
-    admin_client_secret="admin-cli-secret",
     realm="some-realm-name",
     callback_uri="http://localhost:8081/callback",
 )

@@ -98,6 +98,7 @@ def result_or_error(
 
     return inner
 
+
 class FastAPIKeycloakAuth:
     """
     Instance to wrap the Keycloak API with FastAPI. This class handles only
@@ -109,7 +110,7 @@ class FastAPIKeycloakAuth:
         .. code-block:: python
 
             app = FastAPI()
-            idp = KeycloakFastAPI(
+            idp = FastAPIKeycloakAuth(
                 server_url="https://auth.some-domain.com/auth",
                 client_id="some-test-client",
                 client_secret="some-secret",
@@ -124,7 +125,7 @@ class FastAPIKeycloakAuth:
         server_url: str,
         client_id: str,
         client_secret: str,
-        realm: str,      
+        realm: str,
         callback_uri: str,
         scope: str = "openid profile email",
         timeout: int = 10,
@@ -151,6 +152,9 @@ class FastAPIKeycloakAuth:
         self.timeout = timeout
         self.scope = scope
         self.ssl_verification = ssl_verification
+        # PyJWT requires an explicit algorithms list/name to verify a signature; default to
+        # Keycloak's standard RS256. Pass a list/tuple explicitly if you need more than one.
+        self.algorithms = algorithms if algorithms is not None else "RS256"
 
     def add_swagger_config(self, app: FastAPI):
         """Adds the client id and secret securely to the swagger ui.
@@ -259,9 +263,7 @@ class FastAPIKeycloakAuth:
         return f"-----BEGIN PUBLIC KEY-----\n{public_key}\n-----END PUBLIC KEY-----"
 
     @result_or_error(response_model=KeycloakToken)
-    def exchange_authorization_code(
-            self, session_state: str, code: str
-    ) -> KeycloakToken:
+    def exchange_authorization_code(self, session_state: str, code: str) -> KeycloakToken:
         """Models the authorization code OAuth2 flow. Opening the URL provided by `login_uri` will result in a
         callback to the configured callback URL. The callback will also create a session_state and code query
         parameter that can be exchanged for an access token.
@@ -285,7 +287,9 @@ class FastAPIKeycloakAuth:
             "grant_type": "authorization_code",
             "redirect_uri": self.callback_uri,
         }
-        return requests.post(url=self.token_uri, headers=headers, data=data, timeout=self.timeout, verify=self.ssl_verification)
+        return requests.post(
+            url=self.token_uri, headers=headers, data=data, timeout=self.timeout, verify=self.ssl_verification
+        )
 
     def open_id(self, resource: str):
         """Returns a openip connect resource URL"""
@@ -302,13 +306,13 @@ class FastAPIKeycloakAuth:
             bool: True if the token is valid
         """
         try:
-            self._decode_token(token=token, audience=audience)
+            self._decode_token(token=token, audience=audience, algorithms=self.algorithms)
             return True
-        except (ExpiredSignatureError, JWTError, JWTClaimsError):
+        except jwt.PyJWTError:
             return False
 
     def _decode_token(
-            self, token: str, options: dict = None, audience: str = None
+        self, token: str, options: dict = None, audience: str = None, algorithms: str | Container[str] | None = None
     ) -> dict:
         """Decodes a token, verifies the signature by using Keycloaks public key. Optionally verifying the audience
 
@@ -321,9 +325,8 @@ class FastAPIKeycloakAuth:
             dict: Decoded JWT
 
         Raises:
-            ExpiredSignatureError: If the token is expired (exp > datetime.now())
-            JWTError: If decoding fails or the signature is invalid
-            JWTClaimsError: If any claim is invalid
+            jwt.PyJWTError: If decoding fails, the signature is invalid, the token is expired, or any claim is
+                invalid
         """
         if options is None:
             options = {
@@ -331,8 +334,10 @@ class FastAPIKeycloakAuth:
                 "verify_aud": audience is not None,
                 "verify_exp": True,
             }
+        # Fall back to the instance-wide algorithms (itself defaulted to RS256) when the caller
+        # omits algorithms, since PyJWT (unlike jose) requires an explicit value to verify a signature.
         return jwt.decode(
-            token=token, key=self.public_key, options=options, audience=audience
+            token, key=self.public_key, options=options, audience=audience, algorithms=algorithms or self.algorithms
         )
 
     def __str__(self):
@@ -383,38 +388,43 @@ class FastAPIKeycloakAuth:
 class FastAPIKeycloak(FastAPIKeycloakAuth):
     """Instance to wrap the Keycloak API with FastAPI
 
+    Extends `FastAPIKeycloakAuth` with the Keycloak admin API (user/role/group management, password-grant login).
+    Requires an `admin_client_secret` with sufficient rights. If you only need to validate/decode tokens, use
+    `FastAPIKeycloakAuth` instead, which does not require admin credentials.
+
     Attributes: _admin_token (KeycloakToken): A KeycloakToken instance, containing the access token that is used for
     any admin related request
 
     Example:
-        ```python
-        app = FastAPI()
-        idp = KeycloakFastAPI(
-            server_url="https://auth.some-domain.com/auth",
-            client_id="some-test-client",
-            client_secret="some-secret",
-            admin_client_secret="some-admin-cli-secret",
-            realm="Test",
-            callback_uri=f"http://localhost:8081/callback"
-        )
-        idp.add_swagger_config(app)
-        ```
+        .. code-block:: python
+
+            app = FastAPI()
+            idp = FastAPIKeycloak(
+                server_url="https://auth.some-domain.com/auth",
+                client_id="some-test-client",
+                client_secret="some-secret",
+                admin_client_secret="some-admin-cli-secret",
+                realm="Test",
+                callback_uri=f"http://localhost:8081/callback"
+            )
+            idp.add_swagger_config(app)
     """
 
     _admin_token: str
 
     def __init__(
-            self,
-            server_url: str,
-            client_id: str,
-            client_secret: str,
-            realm: str,
-            admin_client_secret: str,
-            callback_uri: str,
-            admin_client_id: str = "admin-cli",
-            scope: str = "openid profile email",
-            timeout: int = 10,
-            ssl_verification: bool = True,
+        self,
+        server_url: str,
+        client_id: str,
+        client_secret: str,
+        realm: str,
+        admin_client_secret: str,
+        callback_uri: str,
+        admin_client_id: str = "admin-cli",
+        scope: str = "openid profile email",
+        timeout: int = 10,
+        ssl_verification: bool = True,
+        algorithms: str | Container[str] | None = None,
     ):
         """FastAPIKeycloak constructor
 
@@ -430,7 +440,17 @@ class FastAPIKeycloak(FastAPIKeycloakAuth):
             timeout (int): Timeout in seconds to wait for the server
             scope (str): OIDC scope
         """
-        super().__init__(server_url, client_id, client_secret, realm, callback_uri, scope, timeout, ssl_verification)
+        super().__init__(
+            server_url,
+            client_id,
+            client_secret,
+            realm,
+            callback_uri,
+            scope,
+            timeout,
+            ssl_verification,
+            algorithms=algorithms,
+        )
 
         self.admin_client_id = admin_client_id
         self.admin_client_secret = admin_client_secret
@@ -462,14 +482,11 @@ class FastAPIKeycloak(FastAPIKeycloakAuth):
         Returns:
             None: Inplace method, updates the _admin_token
         """
-        decoded_token = self._decode_token(token=value)
-        if ((not decoded_token.get("resource_access").get(
-                "realm-management")
-            and
-             (not decoded_token.get("resource_access").get(
-                 "master-realm")) # Keycloak 26 return "master-realm"
-                )
-                or not decoded_token.get("resource_access").get("account")):
+        decoded_token = self._decode_token(token=value, algorithms=self.algorithms)
+        if (
+            not decoded_token.get("resource_access").get("realm-management")
+            and (not decoded_token.get("resource_access").get("master-realm"))  # Keycloak 26 return "master-realm"
+        ) or not decoded_token.get("resource_access").get("account"):
             raise AssertionError(
                 """The access required was not contained in the access token for the `admin-cli`.
                 Possibly a Keycloak misconfiguration. Check if the admin-cli client has `Full Scope Allowed`
@@ -1190,7 +1207,6 @@ class FastAPIKeycloak(FastAPIKeycloakAuth):
             timeout=self.timeout,
             verify=self.ssl_verification,
         )
-
 
     @functools.cached_property
     def users_uri(self):

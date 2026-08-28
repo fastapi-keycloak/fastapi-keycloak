@@ -20,6 +20,16 @@ Python, especially FastAPI. FastAPI is not necessary but is encouraged due to sp
 package supports only the `password` and the `authorization_code` flow. However, the `get_current_user()` method
 accepts any JWT that was signed using Keycloak's private key.
 
+The package exposes two client classes:
+
+- [`FastAPIKeycloakAuth`](reference.md#fastapikeycloakauth) — token validation only (`get_current_user()`,
+  `token_is_valid()`, the authorization_code flow). No admin credentials required.
+- [`FastAPIKeycloak`](reference.md#fastapikeycloak) — extends `FastAPIKeycloakAuth` with the full admin API
+  (user/role/group management, password-grant login). Requires an `admin_client_secret`.
+
+Use `FastAPIKeycloakAuth` if your service only needs to authenticate requests; use `FastAPIKeycloak` if it also
+needs to manage users, roles, or groups.
+
 ## Installation
 
 ```shell
