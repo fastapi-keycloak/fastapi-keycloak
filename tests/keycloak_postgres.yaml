@@ -13,22 +13,22 @@ services:
       always
 
   keycloak:
-    image: quay.io/keycloak/keycloak:25.0
+    image: quay.io/keycloak/keycloak:26.7
     volumes:
-      - ./realm-export.json:/opt/jboss/keycloak/imports/realm-export.json
-    command:
-      - "start-dev -Dkeycloak.profile.feature.upload_scripts=enabled -Dkeycloak.import=/opt/jboss/keycloak/imports/realm-export.json"
+      - ./realm-export.json:/opt/keycloak/data/import/realm-export.json
+    command: start-dev --import-realm
     environment:
-      DB_VENDOR: POSTGRES
-      DB_ADDR: postgres
-      DB_DATABASE: testkeycloakdb
-      DB_USER: testkeycloakuser
-      DB_SCHEMA: public
-      DB_PASSWORD: testkeycloakpassword
-      KEYCLOAK_USER: keycloakuser
-      KEYCLOAK_PASSWORD: keycloakpassword
-      PROXY_ADDRESS_FORWARDING: "true"
-      KEYCLOAK_LOGLEVEL: DEBUG
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_DATABASE: testkeycloakdb
+      KC_DB_USERNAME: testkeycloakuser
+      KC_DB_PASSWORD: testkeycloakpassword
+      # Keycloak 17+ (Quarkus) serves at the root path by default; keep the legacy /auth
+      # prefix so server_url="http://.../auth" in tests/docs/examples keeps working.
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_BOOTSTRAP_ADMIN_USERNAME: keycloakuser
+      KC_BOOTSTRAP_ADMIN_PASSWORD: keycloakpassword
+      KC_HEALTH_ENABLED: "true"
     ports:
       - '8085:8080'
     depends_on:
